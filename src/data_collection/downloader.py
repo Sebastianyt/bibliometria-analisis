@@ -123,18 +123,38 @@ class DataDownloader:
             print("Credentials entered, waiting for login and redirect to EBSCO...")
             # Wait for redirect back to EBSCO (give it more time)
             WebDriverWait(self.driver, 60).until(EC.url_contains("ebscohost.com"))
+            print("Logged in to EBSCO, handling Chrome password save dialog...")
+            
+            # Handle Chrome password save dialog (click "Continue without saving")
+            try:
+                print("Attempting to handle Chrome password dialog...")
+                # Wait for dialog to appear
+                time.sleep(2)
+                
+                # Try to find and click "Continue" or "No thanks" button in the password save dialog
+                try:
+                    # Try clicking the "No thanks" / "Continuar sin cuenta" button
+                    no_thanks_button = self.driver.find_element(By.ID, "yDPgqf")
+                    self.driver.execute_script("arguments[0].click();", no_thanks_button)
+                    print("✓ Clicked 'Continuar sin cuenta' button via ID")
+                    time.sleep(2)
+                except:
+                    pass
+                
+                # Extra wait for dialog to close
+                time.sleep(1)
+            except Exception as e:
+                print(f"⚠ Could not handle password dialog automatically: {e}")
+            
             print("Logged in to EBSCO, waiting 20 seconds for page to fully load...")
             time.sleep(20)
             print("Page loaded, continuing with download...")
         except Exception as e:
             print(f"Login process failed: {e}")
             return None
-        # Print current page state for debugging
-        print("Waiting for results page to fully load...")
-        print(f"Current URL: {self.driver.current_url}")
         
-        # Wait longer for React to render
-        time.sleep(10)
+        # Print current page state for debugging
+        print(f"Current URL: {self.driver.current_url}")
         
         # Take a screenshot for debugging
         try:
@@ -155,6 +175,56 @@ class DataDownloader:
         
         # Print page title
         print(f"Page title: {self.driver.title}")
+        
+        # Click on dropdown button to show 50 results per page
+        print("\n--- Clicking dropdown button para seleccionar 'Mostrar 50' ---")
+        try:
+            # Find button by data-auto attribute
+            dropdown_button = self.driver.find_element(By.CSS_SELECTOR, "button[data-auto='results-per-page-dropdown-toggle']")
+            print("✓ Found dropdown button by data-auto attribute")
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", dropdown_button)
+            time.sleep(1)
+            self.driver.execute_script("arguments[0].click();", dropdown_button)
+            print("✓ Clicked dropdown button")
+            time.sleep(2)
+            
+            # Look for the option to select 50 results
+            print("Looking for '50' option in menu...")
+            try:
+                # Look for the menu that appeared
+                menu_items = self.driver.find_elements(By.CSS_SELECTOR, "button[role='menuitem'], li, div")
+                fifty_option = None
+                
+                for item in menu_items:
+                    item_text = item.text.strip()
+                    print(f"  Checking item: '{item_text}'")
+                    if "50" in item_text:
+                        fifty_option = item
+                        print(f"✓ Found option with '50': {item_text}")
+                        break
+                
+                if fifty_option:
+                    self.driver.execute_script("arguments[0].scrollIntoView(true);", fifty_option)
+                    time.sleep(1)
+                    self.driver.execute_script("arguments[0].click();", fifty_option)
+                    print("✓ Clicked on '50' option")
+                    time.sleep(3)
+                else:
+                    print("✗ Could not find option for 50")
+                    # Try XPath approach
+                    try:
+                        fifty_xpath = self.driver.find_element(By.XPATH, "//*[contains(text(), '50') and not(contains(text(), '500'))]")
+                        self.driver.execute_script("arguments[0].click();", fifty_xpath)
+                        print("✓ Found and clicked 50 option via XPath")
+                        time.sleep(3)
+                    except:
+                        print("⚠ Could not find 50 option via XPath either")
+                        
+            except Exception as e:
+                print(f"✗ Error selecting 50 option: {e}")
+                
+        except Exception as e:
+            print(f"✗ Could not click dropdown button: {e}")
         
         # Try to find bulk menu container and print page structure
         print("\n--- Checking page structure ---")
