@@ -1,0 +1,9 @@
+selenium
+pandas
+requests
+beautifulsoup4
+fuzzywuzzy
+python-levenshtein
+bibtexparser
+rispy
+webdriver-manager
