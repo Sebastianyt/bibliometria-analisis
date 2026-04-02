@@ -303,7 +303,8 @@ class DataDownloader:
 
         self.driver.execute_script("arguments[0].click();", checkbox)
         print("✓ Checkbox masivo activado.")
-        time.sleep(3)
+        print("   Esperando a que cargue la barra de acciones masivas…")
+        time.sleep(7)
 
         print("\n--- Desplegable: todos en esta página ---")
         dropdown_button = None
@@ -327,7 +328,7 @@ class DataDownloader:
             return False
 
         self.driver.execute_script("arguments[0].click();", dropdown_button)
-        time.sleep(3)
+        time.sleep(4)
 
         select_all_option = None
         for attempt in range(5):
@@ -351,7 +352,7 @@ class DataDownloader:
 
         self.driver.execute_script("arguments[0].click();", select_all_option)
         print("✓ Todos los resultados de la página seleccionados.")
-        time.sleep(3)
+        time.sleep(5)
         return True
 
     def _wait_for_new_csv(self, existing_names: set, timeout: int = 120) -> Optional[str]:
@@ -431,7 +432,8 @@ class DataDownloader:
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tool)
         time.sleep(0.3)
         self.driver.execute_script("arguments[0].click();", tool)
-        time.sleep(1.0)
+        print("   Esperando a que el modal de descarga termine de abrir…")
+        time.sleep(5)
 
         modal_wait = WebDriverWait(self.driver, 35)
         csv_radio = None
@@ -451,8 +453,10 @@ class DataDownloader:
             print("ERROR: No apareció el radio CSV en el modal (bulk-download-formats-group-input).")
             return None
 
+        print("   Esperando un momento más antes de elegir CSV…")
+        time.sleep(4)
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", csv_radio)
-        time.sleep(0.35)
+        time.sleep(0.8)
         try:
             label = csv_radio.find_element(By.XPATH, "./ancestor::label[1]")
             self.driver.execute_script("arguments[0].click();", label)
