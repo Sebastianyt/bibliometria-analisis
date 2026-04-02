@@ -373,8 +373,10 @@ class DataDownloader:
         return None
 
     def _close_bulk_download_modal(self) -> bool:
-        wait = WebDriverWait(self.driver, 12)
+        wait = WebDriverWait(self.driver, 15)
         selectors = [
+            (By.CSS_SELECTOR, "button[data-auto='close-button']"),
+            (By.CSS_SELECTOR, "button.eb-modal__close-button[title='Cerrar']"),
             (By.CSS_SELECTOR, "button[aria-label='Cerrar']"),
             (By.CSS_SELECTOR, "button[aria-label='Close']"),
             (By.XPATH, "//div[@role='dialog']//button[.//svg[@data-icon='xmark']]"),
@@ -383,6 +385,8 @@ class DataDownloader:
         for by, sel in selectors:
             try:
                 btn = wait.until(EC.element_to_be_clickable((by, sel)))
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+                time.sleep(0.2)
                 self.driver.execute_script("arguments[0].click();", btn)
                 time.sleep(1.2)
                 return True
@@ -420,35 +424,59 @@ class DataDownloader:
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tool)
         time.sleep(0.3)
         self.driver.execute_script("arguments[0].click();", tool)
-        time.sleep(1.5)
+        time.sleep(1.0)
+
+        modal_wait = WebDriverWait(self.driver, 35)
+        csv_radio = None
+        csv_selectors = (
+            "input[data-auto='bulk-download-formats-group-input'][name='metadata'][value='csv']",
+            "fieldset[data-auto='bulk-download-formats-group-metadata'] "
+            "input[data-auto='bulk-download-formats-group-input'][name='metadata'][value='csv']",
+            "input[data-auto='bulk-download-formats-group-input'][value='csv']",
+        )
+        for sel in csv_selectors:
+            try:
+                csv_radio = modal_wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, sel)))
+                break
+            except TimeoutException:
+                continue
+        if csv_radio is None:
+            print("ERROR: No apareció el radio CSV en el modal (bulk-download-formats-group-input).")
+            return None
+
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", csv_radio)
+        time.sleep(0.35)
+        try:
+            label = csv_radio.find_element(By.XPATH, "./ancestor::label[1]")
+            self.driver.execute_script("arguments[0].click();", label)
+        except Exception:
+            self.driver.execute_script("arguments[0].click();", csv_radio)
+        if not csv_radio.is_selected():
+            self.driver.execute_script("arguments[0].checked = true; arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", csv_radio)
+        time.sleep(0.5)
 
         try:
-            csv_radio = wait.until(
+            dl_btn = modal_wait.until(
                 EC.element_to_be_clickable(
                     (
                         By.CSS_SELECTOR,
-                        "fieldset[data-auto='bulk-download-formats-group-metadata'] "
-                        "input[data-auto='bulk-download-formats-group-input'][value='csv']",
+                        "button[data-auto='bulk-download-modal-download-button'][title='Descargar']",
                     )
                 )
             )
         except TimeoutException:
-            print("ERROR: No apareció el modal o el radio CSV (metadata).")
-            return None
-
-        self.driver.execute_script("arguments[0].click();", csv_radio)
-        time.sleep(0.6)
-
-        try:
-            dl_btn = wait.until(
-                EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "button[data-auto='bulk-download-modal-download-button']")
+            try:
+                dl_btn = modal_wait.until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, "button[data-auto='bulk-download-modal-download-button']")
+                    )
                 )
-            )
-        except TimeoutException:
-            print("ERROR: No se encontró el botón Descargar del modal.")
-            return None
+            except TimeoutException:
+                print("ERROR: No se encontró el botón Descargar del modal.")
+                return None
 
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", dl_btn)
+        time.sleep(0.2)
         self.driver.execute_script("arguments[0].click();", dl_btn)
         print("Descarga CSV iniciada (modal)…")
         path = self._wait_for_new_csv(existing_names, timeout=120)
