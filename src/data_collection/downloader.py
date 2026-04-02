@@ -101,6 +101,108 @@ class DataDownloader:
         except Exception:
             return False
 
+    def _safe_click(self, element) -> None:
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        time.sleep(0.25)
+        try:
+            element.click()
+        except Exception:
+            self.driver.execute_script("arguments[0].click();", element)
+
+    def _apply_academic_search_ultimate_filter_in_current_context(self) -> bool:
+        """
+        Todos los filtros → faceta Proveedor de contenido → Academic Search Ultimate → Aplicar.
+        Debe ejecutarse en el mismo documento/iframe que la lista de resultados EBSCO.
+        """
+        wait = WebDriverWait(self.driver, 25)
+        try:
+            all_filters = wait.until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button[data-auto='all-filters-button'], #all-filter-button")
+                )
+            )
+            self._safe_click(all_filters)
+            time.sleep(1.2)
+
+            facet_header = None
+            for label_fragment in (
+                "Proveedor de contenido",
+                "Content Provider",
+                "Content provider",
+            ):
+                facet_xpath = (
+                    "//button[@data-auto='facet-header']"
+                    "[.//span[@data-auto='facet-label']"
+                    f"[contains(normalize-space(.), '{label_fragment}')]]"
+                )
+                try:
+                    facet_header = WebDriverWait(self.driver, 6).until(
+                        EC.element_to_be_clickable((By.XPATH, facet_xpath))
+                    )
+                    break
+                except TimeoutException:
+                    continue
+            if facet_header is None:
+                return False
+            self._safe_click(facet_header)
+            time.sleep(1.0)
+
+            asu_checkbox = wait.until(
+                EC.presence_of_element_located(
+                    (
+                        By.CSS_SELECTOR,
+                        "input[data-auto='control-input'][value='Academic Search Ultimate']",
+                    )
+                )
+            )
+            if not asu_checkbox.is_selected():
+                self._safe_click(asu_checkbox)
+            time.sleep(0.4)
+
+            apply_btn = wait.until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button[data-auto='ebsco-filter-panel-apply-button']")
+                )
+            )
+            self.driver.execute_script("arguments[0].click();", apply_btn)
+            time.sleep(2.5)
+            return True
+        except Exception:
+            return False
+
+    def _ensure_filters_asu_then_results_per_page_50(self) -> None:
+        """En cada marco: aplicar filtro ASU y luego Mostrar 50; reintento solo 50 si hace falta."""
+        self.driver.switch_to.default_content()
+        frames: List[Optional[object]] = [None]
+        for iframe in self.driver.find_elements(By.TAG_NAME, "iframe"):
+            frames.append(iframe)
+        filter_ok = False
+        fifty_ok = False
+        for frame in frames:
+            self.driver.switch_to.default_content()
+            if frame is not None:
+                self.driver.switch_to.frame(frame)
+            try:
+                if not self._apply_academic_search_ultimate_filter_in_current_context():
+                    continue
+                filter_ok = True
+                print("✓ Filtros aplicados (Proveedor de contenido → Academic Search Ultimate → Aplicar).")
+                if self._click_results_per_page_50_in_current_context():
+                    fifty_ok = True
+                    print("✓ Mostrar 50 seleccionado.")
+                    time.sleep(2)
+                    return
+                print("⚠ Filtros OK pero no se pudo elegir Mostrar 50 en este marco; probando otro…")
+            except Exception:
+                pass
+        self.driver.switch_to.default_content()
+        if not filter_ok:
+            print("⚠ No se aplicaron filtros EBSCO en ningún marco.")
+        if not fifty_ok:
+            print("⚠ Reintentando solo Mostrar 50…")
+            if self._ensure_results_per_page_50():
+                print("✓ Mostrar 50 aplicado (reintento).")
+
     def _ensure_results_per_page_50(self) -> bool:
         """Prueba documento principal y cada iframe hasta encontrar el control EBSCO."""
         self.driver.switch_to.default_content()
@@ -200,14 +302,8 @@ class DataDownloader:
 
         print(f"Page title: {self.driver.title}")
 
-        print("\n--- Mostrar 50 resultados por página ---")
-        if self._ensure_results_per_page_50():
-            print("✓ Seleccionado 'Mostrar 50' en el desplegable de resultados.")
-        else:
-            print(
-                "⚠ No se pudo seleccionar 'Mostrar 50' (revisa el DOM o captura). "
-                "Se continúa con la página tal cual."
-            )
+        print("\n--- Filtros EBSCO → Mostrar 50 ---")
+        self._ensure_filters_asu_then_results_per_page_50()
 
         print("\n--- Checking page structure ---")
         try:
