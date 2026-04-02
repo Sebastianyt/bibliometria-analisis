@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException
 import time
@@ -217,7 +218,8 @@ class DataDownloader:
                 if self._click_results_per_page_50_in_current_context():
                     fifty_ok = True
                     print("✓ Mostrar 50 seleccionado.")
-                    time.sleep(2)
+                    print("   Esperando a que la lista de resultados se actualice…")
+                    time.sleep(8)
                     return True
                 print("⚠ Filtros OK pero no se pudo elegir Mostrar 50 en este marco; probando otro…")
             except Exception:
@@ -244,7 +246,8 @@ class DataDownloader:
                 self.driver.switch_to.frame(frame)
             try:
                 if self._click_results_per_page_50_in_current_context():
-                    time.sleep(2)
+                    print("   Esperando a que la lista de resultados se actualice…")
+                    time.sleep(8)
                     return True
             except Exception:
                 pass
@@ -373,31 +376,35 @@ class DataDownloader:
         return None
 
     def _close_bulk_download_modal(self) -> bool:
-        wait = WebDriverWait(self.driver, 15)
+        """Cierra el modal con Escape (más fiable que la X en EBSCO)."""
+        try:
+            body = self.driver.find_element(By.TAG_NAME, "body")
+            body.send_keys(Keys.ESCAPE)
+            time.sleep(0.45)
+            ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+            time.sleep(0.45)
+            ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+            time.sleep(1.5)
+            print("✓ Modal cerrado con tecla Escape.")
+            return True
+        except Exception:
+            pass
+        wait = WebDriverWait(self.driver, 8)
         selectors = [
             (By.CSS_SELECTOR, "button[data-auto='close-button']"),
             (By.CSS_SELECTOR, "button.eb-modal__close-button[title='Cerrar']"),
             (By.CSS_SELECTOR, "button[aria-label='Cerrar']"),
             (By.CSS_SELECTOR, "button[aria-label='Close']"),
-            (By.XPATH, "//div[@role='dialog']//button[.//svg[@data-icon='xmark']]"),
-            (By.XPATH, "//button[.//svg[@data-icon='xmark']]"),
         ]
         for by, sel in selectors:
             try:
                 btn = wait.until(EC.element_to_be_clickable((by, sel)))
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
-                time.sleep(0.2)
                 self.driver.execute_script("arguments[0].click();", btn)
                 time.sleep(1.2)
                 return True
             except Exception:
                 continue
-        try:
-            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
-            time.sleep(1)
-            return True
-        except Exception:
-            return False
+        return False
 
     def _download_csv_via_tool_button(self) -> Optional[str]:
         """Botón herramienta Descargar → modal → CSV → Descargar; espera al archivo."""
@@ -581,13 +588,18 @@ class DataDownloader:
                     print(f"ERROR: No se pudo cambiar de proveedor a «{provider}».")
                     break
                 print("✓ Proveedor actualizado.")
-                time.sleep(2)
+                time.sleep(3)
                 if not self._click_results_per_page_50_in_current_context():
                     self._ensure_results_per_page_50()
+                print("   Esperando tras Mostrar 50…")
+                time.sleep(6)
 
             if not self._bulk_select_all_on_page():
                 print("ERROR: Selección masiva en página falló.")
                 break
+
+            print("Esperando un momento antes de abrir Descargar…")
+            time.sleep(4)
 
             csv_path = self._download_csv_via_tool_button()
             if not csv_path:
@@ -595,10 +607,10 @@ class DataDownloader:
             results.append((provider, csv_path))
 
             if idx < n - 1:
-                print("\n--- Cerrar modal (X) antes de la siguiente base ---")
+                print("\n--- Cerrar modal antes de la siguiente base (Escape) ---")
                 if not self._close_bulk_download_modal():
-                    print("⚠ No se detectó cierre del modal; probando Escape…")
-                time.sleep(1.5)
+                    print("⚠ No se pudo cerrar el modal.")
+                time.sleep(2)
 
         return results
 
