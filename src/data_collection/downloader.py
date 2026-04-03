@@ -489,10 +489,15 @@ class DataDownloader:
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", dl_btn)
         time.sleep(0.2)
         self.driver.execute_script("arguments[0].click();", dl_btn)
-        print("Descarga CSV iniciada (modal)…")
-        path = self._wait_for_new_csv(existing_names, timeout=120)
+        print("Descarga CSV iniciada (modal)… Dando 10 segundos.")
+        
+        # Esperamos fijo 10 segundos para descargar según instrucción
+        time.sleep(10)
+        
+        # Intentamos obtener la ruta del archivo que se debió descargar
+        path = self._wait_for_new_csv(existing_names, timeout=2)
         if path is None:
-            print("ERROR: No llegó ningún CSV nuevo a la carpeta de descargas.")
+            print("ERROR: No llegó ningún CSV nuevo a la carpeta de descargas tras los 10s.")
         return path
 
     def search_and_export(self, query: str) -> List[Tuple[str, str]]:
