@@ -629,10 +629,206 @@ class DataDownloader:
             self.driver.quit()
         print("Browser closed.")
 
+    def search_and_export_ieee(self, query: str) -> List[Tuple[str, str]]:
+        print("Going to databases page (IEEE)...")
+        self.driver.get("https://library.uniquindio.edu.co/databases")
+        print("Current URL after get: " + self.driver.current_url)
+        WebDriverWait(self.driver, 120).until(EC.presence_of_element_located((By.ID, "edit-search-form-stacks-external-catalogs-customdescubridor-eds-search-bar-container-query")))
+        print("Search box found")
+        print("Searching...")
+        search_box = self.driver.find_element(By.ID, "edit-search-form-stacks-external-catalogs-customdescubridor-eds-search-bar-container-query")
+        search_box.send_keys(query)
+        print("Query entered")
+        print("Waiting 3 seconds before clicking...")
+        time.sleep(3)
+        print("3 seconds elapsed, now clicking submit")
+        submit_button = self.driver.find_element(By.ID, "edit-search-form-stacks-external-catalogs-customdescubridor-eds-search-bar-container-actions-submit")
+        print("Submit button found")
+        self.driver.execute_script("arguments[0].click();", submit_button)
+        print("JavaScript click executed")
+        time.sleep(2)
+        print("Clicked, current url: " + self.driver.current_url)
+        if len(self.driver.window_handles) > 1:
+            self.driver.switch_to.window(self.driver.window_handles[-1])
+            print("Switched to new window, url: " + self.driver.current_url)
+        print("Search submitted, checking for login...")
+        try:
+            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.ID, "btn-google")))
+            print("Login form appeared, clicking Google login...")
+            google_button = self.driver.find_element(By.ID, "btn-google")
+            google_button.click()
+            print("Google login clicked, entering credentials...")
+            WebDriverWait(self.driver, 20).until(EC.url_contains("accounts.google.com"))
+            print("On Google page")
+            email_field = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "identifierId")))
+            email_field.send_keys("sebastiand.espanag@uqvirtual.edu.co" + Keys.RETURN)
+            print("Email entered and submitted, waiting 3 seconds...")
+            time.sleep(3)
+            print("Looking for password field...")
+            password_field = None
+            for attempt in range(10):
+                try:
+                    password_field = self.driver.find_element(By.NAME, "Passwd")
+                    print(f"Found password field by name='Passwd' on attempt {attempt + 1}")
+                    break
+                except:
+                    pass
+                try:
+                    password_field = self.driver.find_element(By.ID, "password")
+                    print(f"Found password field by ID on attempt {attempt + 1}")
+                    break
+                except:
+                    pass
+                print(f"Attempt {attempt + 1}/10: Password field not found, waiting 3 more seconds...")
+                time.sleep(3)
+            if password_field is None:
+                print("ERROR: Could not find password field after 30 seconds!")
+                print("Current URL: " + self.driver.current_url)
+                return []
+            print("Password field found! Entering password...")
+            password_field.send_keys("geamx100familia007")
+            print("Password typed. Pressing Enter...")
+            password_field.send_keys(Keys.RETURN)
+            print("Password submitted")
+            print("Waiting for redirect to EBSCO / CRAI (Ezproxy)...")
+            WebDriverWait(self.driver, 90).until(
+                lambda d: self._url_looks_like_ebsco_results(d.current_url)
+            )
+            print("✓ Logged in, waiting for results UI...")
+            time.sleep(4)
+        except Exception as e:
+            print(f"Login process failed: {e}")
+            return []
+
+        print(f"Current URL: {self.driver.current_url}")
+        try:
+            self.driver.save_screenshot("results_page_screenshot_ieee.png")
+            print("Screenshot saved as results_page_screenshot_ieee.png")
+        except Exception:
+            print("Could not save screenshot")
+
+        print(f"Page title: {self.driver.title}")
+
+        results: List[Tuple[str, str]] = []
+        provider = "IEEE Xplore Digital Library"
+        print(f"\n=== Proveedor EBSCO (Segunda Descarga): {provider} ===")
+        
+        wait = WebDriverWait(self.driver, 25)
+        self.driver.switch_to.default_content()
+        frames: List[Optional[object]] = [None]
+        for iframe in self.driver.find_elements(By.TAG_NAME, "iframe"):
+            frames.append(iframe)
+            
+        success_filters = False
+        for frame in frames:
+            self.driver.switch_to.default_content()
+            if frame is not None:
+                self.driver.switch_to.frame(frame)
+            try:
+                # 0. Abrir todos los filtros
+                all_filters = wait.until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-auto='all-filters-button'], #all-filter-button"))
+                )
+                self._safe_click(all_filters)
+                time.sleep(1.2)
+
+                # 1. Click faceta Proveedor de contenido (como enviaste)
+                facet_header = wait.until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//button[@data-auto='facet-header'][.//span[@data-auto='facet-label'][contains(normalize-space(.), 'Proveedor de contenido')]]")
+                    )
+                )
+                self._safe_click(facet_header)
+                time.sleep(1.0)
+                
+                # 2. Click +49 más
+                show_more_btn = self.driver.find_element(By.CSS_SELECTOR, "button[data-auto='custom-show-more-button']")
+                self._safe_click(show_more_btn)
+                time.sleep(1.5)
+
+                # 3. Click label IEEE
+                ieee_checkbox = self.driver.find_element(By.CSS_SELECTOR, "input[data-auto='control-input'][value='IEEE Xplore Digital Library']")
+                self._safe_click(ieee_checkbox)
+                time.sleep(0.4)
+
+                # 4a. Botón Actualizar selecciones (cierra el modal de +más)
+                try:
+                    update_btn = wait.until(
+                        EC.element_to_be_clickable((By.XPATH, "//button[@data-auto='ebsco-filter-panel-apply-button' and contains(., 'Actualizar')]"))
+                    )
+                    self._safe_click(update_btn)
+                    print("✓ Botón 'Actualizar selecciones' pulsado.")
+                    time.sleep(1.5)
+                except Exception as e:
+                    print(f"Cuidado: No se encontró 'Actualizar', intentando saltar directo a Aplicar.")
+
+                # 4b. Botón Aplicar (envía los filtros en el panel principal)
+                try:
+                    apply_btn = wait.until(
+                        EC.element_to_be_clickable((By.XPATH, "//button[@data-auto='ebsco-filter-panel-apply-button' and contains(., 'Aplicar')]"))
+                    )
+                    self._safe_click(apply_btn)
+                    print("✓ Botón 'Aplicar' pulsado con éxito.")
+                except Exception:
+                    # Fallback por si la palabra cambia
+                    apply_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[data-auto='ebsco-filter-panel-apply-button']")
+                    for btn in apply_btns:
+                        if btn.is_displayed():
+                            self._safe_click(btn)
+                            print("✓ Botón genérico (Aplicar) pulsado por fallback.")
+                            break
+                            
+                time.sleep(2.5)
+                success_filters = True
+                break
+            except Exception:
+                pass
+
+        if not success_filters:
+            print("No se pudo aplicar los filtros de IEEE en ningún frame.")
+            return results
+            
+        print("✓ Filtros IEEE aplicados con éxito.")
+        
+        # --- Continuar igual que la otra (Mostrar 50, seleeción masiva, descargar) ---
+        if not self._click_results_per_page_50_in_current_context():
+            self._ensure_results_per_page_50()
+        print("   Esperando tras Mostrar 50…")
+        time.sleep(6)
+
+        if not self._bulk_select_all_on_page():
+            print("ERROR: Selección masiva en página falló para IEEE.")
+            return results
+
+        print("Esperando un momento antes de abrir Descargar…")
+        time.sleep(4)
+
+        csv_path = self._download_csv_via_tool_button()
+        if csv_path:
+            results.append((provider, csv_path))
+
+        return results
+
 def download_all_data(query: str, download_dir: str) -> List[Tuple[str, str]]:
-    print("Initializing downloader...")
-    downloader = DataDownloader(download_dir)
-    downloader.start_browser()
-    files = downloader.search_and_export(query)
-    downloader.close_browser()
-    return files
+    all_files = []
+    
+    # 1. PRIMERA DESCARGA (Intacta)
+    print("\n--- INICIANDO PRIMERA DESCARGA (Academic Search Ultimate) ---")
+    downloader1 = DataDownloader(download_dir)
+    downloader1.start_browser()
+    files1 = downloader1.search_and_export(query)
+    all_files.extend(files1)
+    downloader1.close_browser()
+    
+    print("\nEsperando unos segundos antes de iniciar la segunda descarga...")
+    time.sleep(5)
+    
+    # 2. SEGUNDA DESCARGA (IEEE)
+    print("\n--- INICIANDO SEGUNDA DESCARGA (IEEE Xplore Digital Library) ---")
+    downloader2 = DataDownloader(download_dir)
+    downloader2.start_browser()
+    files2 = downloader2.search_and_export_ieee(query)
+    all_files.extend(files2)
+    downloader2.close_browser()
+    
+    return all_files
