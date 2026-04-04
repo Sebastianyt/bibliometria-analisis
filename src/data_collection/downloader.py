@@ -589,12 +589,7 @@ class DataDownloader:
             return []
 
         print(f"Current URL: {self.driver.current_url}")
-        try:
-            self.driver.save_screenshot("results_page_screenshot.png")
-            print("Screenshot saved as results_page_screenshot.png")
-        except Exception:
-            print("Could not save screenshot")
-
+        # (Bloque de captura de pantalla eliminado por limpieza)
         print(f"Page title: {self.driver.title}")
 
         providers = _ebsco_providers_from_env()
