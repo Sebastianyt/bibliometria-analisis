@@ -332,18 +332,25 @@ class DataDownloader:
 
         select_all_option = None
         for attempt in range(5):
-            try:
-                select_all_option = self.driver.find_element(By.ID, "downshift-0-item-0")
+            for selector in [
+                (By.ID, "downshift-0-item-0"),
+                (By.CSS_SELECTOR, "li[data-auto*='select-all-on-page']"),
+                (By.XPATH, "//*[@role='option' and (contains(translate(., 'TODOS', 'todos'), 'tod') or contains(translate(., 'ALL', 'all'), 'all'))]"),
+                (By.CSS_SELECTOR, "li[id^='downshift-'][id$='-item-0']")
+            ]:
+                try:
+                    elements = self.driver.find_elements(selector[0], selector[1])
+                    for el in elements:
+                        if el.is_displayed():
+                            select_all_option = el
+                            break
+                    if select_all_option:
+                        break
+                except Exception:
+                    pass
+                    
+            if select_all_option:
                 break
-            except Exception:
-                pass
-            try:
-                select_all_option = self.driver.find_element(
-                    By.CSS_SELECTOR, "li[data-auto='arrow-dropdown-select-all-on-page-button']"
-                )
-                break
-            except Exception:
-                pass
             time.sleep(1)
 
         if select_all_option is None:
@@ -532,7 +539,12 @@ class DataDownloader:
             WebDriverWait(self.driver, 20).until(EC.url_contains("accounts.google.com"))
             print("On Google page")
             email_field = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "identifierId")))
-            email_field.send_keys("sebastiand.espanag@uqvirtual.edu.co" + Keys.RETURN)
+            
+            google_email = os.environ.get("GOOGLE_EMAIL")
+            if not google_email:
+                raise ValueError("ERROR CRÍTICO: No se encontró GOOGLE_EMAIL configurado en el archivo .env")
+            email_field.send_keys(google_email + Keys.RETURN)
+            
             print("Email entered and submitted, waiting 3 seconds...")
             time.sleep(3)
             print("Looking for password field...")
@@ -556,8 +568,13 @@ class DataDownloader:
                 print("ERROR: Could not find password field after 30 seconds!")
                 print("Current URL: " + self.driver.current_url)
                 return []
+                
+            google_password = os.environ.get("GOOGLE_PASSWORD")
+            if not google_password:
+                raise ValueError("ERROR CRÍTICO: No se encontró GOOGLE_PASSWORD configurado en el archivo .env")
+                
             print("Password field found! Entering password...")
-            password_field.send_keys("geamx100familia007")
+            password_field.send_keys(google_password)
             print("Password typed. Pressing Enter...")
             password_field.send_keys(Keys.RETURN)
             print("Password submitted")
@@ -661,7 +678,12 @@ class DataDownloader:
             WebDriverWait(self.driver, 20).until(EC.url_contains("accounts.google.com"))
             print("On Google page")
             email_field = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "identifierId")))
-            email_field.send_keys("sebastiand.espanag@uqvirtual.edu.co" + Keys.RETURN)
+            
+            google_email_ieee = os.environ.get("GOOGLE_EMAIL")
+            if not google_email_ieee:
+                raise ValueError("ERROR CRÍTICO: No se encontró GOOGLE_EMAIL configurado en el archivo .env")
+            email_field.send_keys(google_email_ieee + Keys.RETURN)
+            
             print("Email entered and submitted, waiting 3 seconds...")
             time.sleep(3)
             print("Looking for password field...")
@@ -685,8 +707,13 @@ class DataDownloader:
                 print("ERROR: Could not find password field after 30 seconds!")
                 print("Current URL: " + self.driver.current_url)
                 return []
+                
+            google_password_ieee = os.environ.get("GOOGLE_PASSWORD")
+            if not google_password_ieee:
+                raise ValueError("ERROR CRÍTICO: No se encontró GOOGLE_PASSWORD configurado en el archivo .env")
+                
             print("Password field found! Entering password...")
-            password_field.send_keys("geamx100familia007")
+            password_field.send_keys(google_password_ieee)
             print("Password typed. Pressing Enter...")
             password_field.send_keys(Keys.RETURN)
             print("Password submitted")

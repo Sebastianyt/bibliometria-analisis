@@ -2,6 +2,9 @@ import os
 import sys
 sys.path.insert(0, 'src')
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from data_collection.downloader import download_all_data
 from data_collection.parser import parse_file
 from preprocessing.deduplicator import deduplicate_articles

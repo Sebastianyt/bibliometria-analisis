@@ -7,3 +7,4 @@ python-levenshtein
 bibtexparser
 rispy
 webdriver-manager
+python-dotenv
