@@ -12,9 +12,11 @@ class Article:
     doi: Optional[str]
     source: str  # e.g., 'ACM', 'SAGE', 'ScienceDirect'
     url: Optional[str]
+    document_type: str = "Article"  # e.g., 'Article', 'Conference', 'Book Chapter'
 
     def to_dict(self):
         return {
+            'document_type': self.document_type,
             'title': self.title,
             'authors': '; '.join(self.authors),
             'keywords': '; '.join(self.keywords),

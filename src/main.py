@@ -21,6 +21,14 @@ def main():
     os.makedirs(processed_dir, exist_ok=True)
     os.makedirs(duplicates_dir, exist_ok=True)
 
+    # Empty temp folder from previous runs to avoid accumulating garbage
+    import glob
+    for f in glob.glob(os.path.join(download_dir, "*")):
+        try:
+            os.remove(f)
+        except Exception:
+            pass
+
     # Download data
     print("\n=== Starting Download ===")
     downloaded_files = download_all_data(query, download_dir)
@@ -29,12 +37,12 @@ def main():
         print("No files downloaded. Exiting.")
         return
     
-    print(f"\nDownloaded {len(downloaded_files)} file(s)")
+    print(f"\nDescargados {len(downloaded_files)} archivo(s)")
     for source, file_path in downloaded_files:
         print(f"  - {source}: {file_path}")
 
     # Parse all files
-    print("\n=== Starting Parsing ===")
+    print("\n=== Iniciando Parsing ===")
     all_articles = []
     for source, file_path in downloaded_files:
         print(f"Parsing {source} from {file_path}...")
@@ -45,11 +53,11 @@ def main():
     print(f"Total articles parsed: {len(all_articles)}")
 
     # Deduplicate
-    print("\n=== Starting Deduplication ===")
+    print("\n=== Iniciando Deduplicación ===")
     unique_articles, duplicates = deduplicate_articles(all_articles, threshold=85)
 
     # Save unified file
-    print("\n=== Saving Results ===")
+    print("\n=== Guardando Resultados ===")
     unified_path = os.path.join(processed_dir, "unified_articles.csv")
     df_unique = pd.DataFrame([a.to_dict() for a in unique_articles])
     df_unique.to_csv(unified_path, index=False, encoding='utf-8')
@@ -66,7 +74,7 @@ def main():
     else:
         print("No duplicates found.")
     
-    print("\n=== Process Complete ===")
+    print("\n=== Proceso Completado ===")
     print(f"Summary:")
     print(f"  Original articles: {len(all_articles)}")
     print(f"  Unique articles: {len(unique_articles)}")

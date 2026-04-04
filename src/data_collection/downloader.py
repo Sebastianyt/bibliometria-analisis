@@ -26,8 +26,8 @@ def _ebsco_providers_from_env() -> List[str]:
 
 class DataDownloader:
     def __init__(self, download_dir: str):
-        self.download_dir = download_dir
-        os.makedirs(download_dir, exist_ok=True)
+        self.download_dir = os.path.abspath(download_dir)
+        os.makedirs(self.download_dir, exist_ok=True)
         self.driver = None
 
     def start_browser(self):
@@ -820,8 +820,8 @@ class DataDownloader:
         # --- Continuar igual que la otra (Mostrar 50, seleeción masiva, descargar) ---
         if not self._click_results_per_page_50_in_current_context():
             self._ensure_results_per_page_50()
-        print("   Esperando tras Mostrar 50…")
-        time.sleep(6)
+        print("   Esperando 11 segundos extra tras Mostrar 50 para que cargue bien la tabla…")
+        time.sleep(11)
 
         if not self._bulk_select_all_on_page():
             print("ERROR: Selección masiva en página falló para IEEE.")

@@ -24,10 +24,12 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
         doi = ''
         url = ''
         
+        document_type = ''
+        
         # Try different column names
         for col in df.columns:
             col_lower = col.lower()
-            if 'title' in col_lower:
+            if 'title' in col_lower and 'publication' not in col_lower and 'journal' not in col_lower:
                 title = row[col] if pd.notna(row[col]) else ''
             elif 'author' in col_lower:
                 authors = str(row[col]).split(';') if pd.notna(row[col]) else []
@@ -48,6 +50,8 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
                 doi = row[col] if pd.notna(row[col]) else ''
             elif 'url' in col_lower or 'link' in col_lower:
                 url = row[col] if pd.notna(row[col]) else ''
+            elif 'type' in col_lower or 'document type' in col_lower or 'item type' in col_lower:
+                document_type = row[col] if pd.notna(row[col]) else ''
         
         if title:  # Only add if title exists
             article = Article(
@@ -59,7 +63,8 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
                 year=year,
                 doi=str(doi).strip(),
                 source=source,
-                url=str(url).strip()
+                url=str(url).strip(),
+                document_type=str(document_type).strip() if document_type else "Article"
             )
             articles.append(article)
     
@@ -79,7 +84,8 @@ def parse_bibtex(file_path: str, source: str) -> List[Article]:
             year=int(entry.get('year')) if entry.get('year') and entry.get('year').isdigit() else None,
             doi=entry.get('doi', ''),
             source=source,
-            url=entry.get('url', '')
+            url=entry.get('url', ''),
+            document_type=entry.get('ENTRYTYPE', 'Article').capitalize()
         )
         articles.append(article)
     return articles
@@ -98,7 +104,8 @@ def parse_ris(file_path: str, source: str) -> List[Article]:
             year=int(entry.get('year')) if entry.get('year') and str(entry.get('year')).isdigit() else None,
             doi=entry.get('doi', ''),
             source=entry.get('db', source),  # Use DB field if available
-            url=entry.get('url', '')
+            url=entry.get('url', ''),
+            document_type=entry.get('type_of_reference', 'Article')
         )
         articles.append(article)
     return articles
