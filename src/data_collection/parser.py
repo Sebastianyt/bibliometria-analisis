@@ -31,26 +31,31 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
             col_lower = col.lower()
             if 'title' in col_lower and 'publication' not in col_lower and 'journal' not in col_lower:
                 title = row[col] if pd.notna(row[col]) else ''
-            elif 'author' in col_lower:
+            elif 'author' in col_lower or 'contributors' in col_lower:
                 authors = str(row[col]).split(';') if pd.notna(row[col]) else []
                 authors = [a.strip() for a in authors]
-            elif 'keyword' in col_lower:
+            elif 'keyword' in col_lower or 'subjects' in col_lower:
                 keywords = str(row[col]).split(';') if pd.notna(row[col]) else []
                 keywords = [k.strip() for k in keywords]
             elif 'abstract' in col_lower or 'summary' in col_lower:
                 abstract = row[col] if pd.notna(row[col]) else ''
             elif 'journal' in col_lower or 'publication title' in col_lower:
                 journal = row[col] if pd.notna(row[col]) else ''
-            elif 'year' in col_lower:
-                try:
-                    year = int(row[col]) if pd.notna(row[col]) else None
-                except:
-                    year = None
-            elif 'doi' in col_lower:
+            elif 'year' in col_lower or 'publicationdate' in col_lower or 'date' in col_lower:
+                if year is None:  # En caso de múltiples columnas de fecha, priorizamos la primera que hallemos
+                    try:
+                        val_str = str(row[col]).replace(".0", "").strip()
+                        if len(val_str) >= 4 and val_str[:4].isdigit():
+                            year = int(val_str[:4])
+                        else:
+                            year = int(float(row[col]))
+                    except:
+                        pass
+            elif 'doi' == col_lower:
                 doi = row[col] if pd.notna(row[col]) else ''
             elif 'url' in col_lower or 'link' in col_lower:
                 url = row[col] if pd.notna(row[col]) else ''
-            elif 'type' in col_lower or 'document type' in col_lower or 'item type' in col_lower:
+            elif col_lower in ['type', 'document type', 'item type', 'doctypes']:
                 document_type = row[col] if pd.notna(row[col]) else ''
         
         if title:  # Only add if title exists
