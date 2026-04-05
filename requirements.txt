@@ -8,3 +8,7 @@ bibtexparser
 rispy
 webdriver-manager
 python-dotenv
+scikit-learn
+spacy
+sentence-transformers
+streamlit
