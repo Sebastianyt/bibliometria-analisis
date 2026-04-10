@@ -723,12 +723,6 @@ class DataDownloader:
             return []
 
         print(f"Current URL: {self.driver.current_url}")
-        try:
-            self.driver.save_screenshot("results_page_screenshot_ieee.png")
-            print("Screenshot saved as results_page_screenshot_ieee.png")
-        except Exception:
-            print("Could not save screenshot")
-
         print(f"Page title: {self.driver.title}")
 
         results: List[Tuple[str, str]] = []
