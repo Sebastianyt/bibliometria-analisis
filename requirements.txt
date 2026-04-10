@@ -12,3 +12,4 @@ scikit-learn
 spacy
 sentence-transformers
 streamlit
+plotly
