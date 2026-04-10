@@ -284,62 +284,71 @@ def render():
 > Si apuntan en la misma dirección, el significado es equivalente → precisión alta.
         """)
 
-    with st.spinner("Calculando precisión semántica con BERT MiniLM..."):
-        eval_results = evaluate_precision(new_terms, CATEGORY)
+    try:
+        with st.spinner("Calculando precisión semántica con BERT MiniLM..."):
+            eval_results = evaluate_precision(new_terms, CATEGORY)
 
-    avg_prec = average_precision(eval_results)
+        avg_prec = average_precision(eval_results)
 
-    # KPI global
-    kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-    high = sum(1 for e in eval_results if e["precision"] >= 0.70)
-    mid  = sum(1 for e in eval_results if 0.40 <= e["precision"] < 0.70)
-    low  = sum(1 for e in eval_results if e["precision"] < 0.40)
+        # KPI global
+        kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+        high = sum(1 for e in eval_results if e["precision"] >= 0.70)
+        mid  = sum(1 for e in eval_results if 0.40 <= e["precision"] < 0.70)
+        low  = sum(1 for e in eval_results if e["precision"] < 0.40)
 
-    kpi_col1.metric("🎯 Precisión Promedio", f"{avg_prec * 100:.1f}%")
-    kpi_col2.metric("🟢 Alta precisión", f"{high} términos")
-    kpi_col3.metric("🟡 Media / 🔴 Baja", f"{mid + low} términos")
+        kpi_col1.metric("🎯 Precisión Promedio", f"{avg_prec * 100:.1f}%")
+        kpi_col2.metric("🟢 Alta precisión", f"{high} términos")
+        kpi_col3.metric("🟡 Media / 🔴 Baja", f"{mid + low} términos")
 
-    st.markdown("#### Detalle por término")
+        st.markdown("#### Detalle por término")
 
-    # Tabla con colores
-    for e in eval_results:
-        cols = st.columns([3, 2, 2])
-        cols[0].markdown(f"**{e['term']}**")
-        cols[1].progress(e["precision"], text=f"{e['pct']:.1f}%")
-        cols[2].markdown(f"{e['label']}")
+        # Tabla con colores
+        for e in eval_results:
+            cols = st.columns([3, 2, 2])
+            cols[0].markdown(f"**{e['term']}**")
+            cols[1].progress(e["precision"], text=f"{e['pct']:.1f}%")
+            cols[2].markdown(f"{e['label']}")
 
-    st.markdown("---")
+        st.markdown("---")
 
-    # Gráfico de radar / gauge de precisión promedio
-    fig_gauge = go.Figure(go.Indicator(
-        mode="gauge+number+delta",
-        value=avg_prec * 100,
-        title={"text": "Precisión Promedio del Conjunto Generado", "font": {"size": 16}},
-        delta={"reference": 50, "suffix": "%"},
-        number={"suffix": "%", "font": {"size": 36}},
-        gauge={
-            "axis": {"range": [0, 100]},
-            "bar": {"color": "#6C63FF"},
-            "steps": [
-                {"range": [0, 40],  "color": "#3d1a1a"},
-                {"range": [40, 70], "color": "#3d3010"},
-                {"range": [70, 100],"color": "#0f3d20"},
-            ],
-            "threshold": {
-                "line": {"color": "#ffffff", "width": 3},
-                "thickness": 0.8,
-                "value": avg_prec * 100,
+        # Gráfico de radar / gauge de precisión promedio
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
+            value=avg_prec * 100,
+            title={"text": "Precisión Promedio del Conjunto Generado", "font": {"size": 16}},
+            delta={"reference": 50, "suffix": "%"},
+            number={"suffix": "%", "font": {"size": 36}},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "#6C63FF"},
+                "steps": [
+                    {"range": [0, 40],  "color": "#3d1a1a"},
+                    {"range": [40, 70], "color": "#3d3010"},
+                    {"range": [70, 100],"color": "#0f3d20"},
+                ],
+                "threshold": {
+                    "line": {"color": "#ffffff", "width": 3},
+                    "thickness": 0.8,
+                    "value": avg_prec * 100,
+                },
             },
-        },
-    ))
-    fig_gauge.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#e0e0e0"),
-        height=320,
-    )
-    st.plotly_chart(fig_gauge, use_container_width=True)
+        ))
+        fig_gauge.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#e0e0e0"),
+            height=320,
+        )
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
-    st.caption(
-        "💡 Una precisión promedio ≥ 70% indica que el algoritmo TF-IDF generó palabras "
-        "semánticamente coherentes con la categoría analizada."
-    )
+        st.caption(
+            "💡 Una precisión promedio ≥ 70% indica que el algoritmo TF-IDF generó palabras "
+            "semánticamente coherentes con la categoría analizada."
+        )
+
+    except Exception as _bert_err:
+        st.warning(
+            f"⚠️ No se pudo cargar el modelo BERT para la evaluación de precisión. "
+            f"Las demás tareas funcionan correctamente.\n\n"
+            f"*Detalle técnico: {_bert_err}*"
+        )
+

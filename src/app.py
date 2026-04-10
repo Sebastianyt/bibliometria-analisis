@@ -6,13 +6,6 @@ import sys
 # Permitir ruta a módulos locales
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from similarity.levenshtein import levenshtein_similarity
-from similarity.jaccard import jaccard_similarity
-from similarity.cosine import tfidf_cosine_similarity
-from similarity.euclidean import tfidf_euclidean_similarity
-from similarity.bert_model import bert_similarity
-from similarity.word2vec_model import word2vec_similarity
-
 st.set_page_config(
     page_title="Bibliometría — Análisis de IA Generativa",
     layout="wide",
@@ -43,15 +36,24 @@ st.markdown("# 🔬 Bibliometría · IA Generativa en Educación")
 st.markdown("Sistema de análisis bibliométrico automatizado · *Streamlit Dashboard*")
 st.divider()
 
-tab2, tab3 = st.tabs([
+tab2, tab3, tab4 = st.tabs([
     "📐 Req 2 · Similitud Textual",
     "📊 Req 3 · Frecuencia y Generación de Palabras",
+    "🌳 Req 4 · Agrupamiento Jerárquico",
 ])
 
 # ════════════════════════════════════════════════════════════════════════════
 # REQUERIMIENTO 2 — Similitud Textual
 # ════════════════════════════════════════════════════════════════════════════
 with tab2:
+    # Imports lazy: solo se cargan cuando el usuario entra a este tab
+    from similarity.levenshtein import levenshtein_similarity
+    from similarity.jaccard import jaccard_similarity
+    from similarity.cosine import tfidf_cosine_similarity
+    from similarity.euclidean import tfidf_euclidean_similarity
+    from similarity.bert_model import bert_similarity
+    from similarity.word2vec_model import word2vec_similarity
+
     st.subheader("🤖 Análisis de Similitud Textual entre Artículos")
     st.markdown(
         "Selecciona dos artículos para comparar sus **abstracts** con 4 algoritmos "
@@ -155,3 +157,10 @@ with tab2:
 with tab3:
     from modules.req3_frequency import render as render_req3
     render_req3()
+
+# ════════════════════════════════════════════════════════════════════════════
+# REQUERIMIENTO 4 — Agrupamiento Jerárquico y Dendrogramas
+# ════════════════════════════════════════════════════════════════════════════
+with tab4:
+    from modules.req4_clustering import render as render_req4
+    render_req4()
