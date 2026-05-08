@@ -13,6 +13,7 @@ class Article:
     source: str  # e.g., 'ACM', 'SAGE', 'ScienceDirect'
     url: Optional[str]
     document_type: str = "Article"  # e.g., 'Article', 'Conference', 'Book Chapter'
+    location: Optional[str] = None
 
     def to_dict(self):
         return {
@@ -25,5 +26,6 @@ class Article:
             'year': self.year,
             'doi': self.doi,
             'source': self.source,
-            'url': self.url
+            'url': self.url,
+            'publisherLocations': self.location
         }

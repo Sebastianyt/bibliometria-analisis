@@ -15,3 +15,7 @@ streamlit
 plotly
 scipy
 nltk
+wordcloud
+matplotlib
+kaleido
+fpdf2

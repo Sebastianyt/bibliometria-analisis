@@ -23,6 +23,7 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
         year = None
         doi = ''
         url = ''
+        location = ''
         
         document_type = ''
         
@@ -57,6 +58,8 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
                 url = row[col] if pd.notna(row[col]) else ''
             elif col_lower in ['type', 'document type', 'item type', 'doctypes']:
                 document_type = row[col] if pd.notna(row[col]) else ''
+            elif 'publisherlocations' in col_lower or 'location' in col_lower:
+                location = row[col] if pd.notna(row[col]) else ''
         
         if title:  # Only add if title exists
             article = Article(
@@ -69,7 +72,8 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
                 doi=str(doi).strip(),
                 source=source,
                 url=str(url).strip(),
-                document_type=str(document_type).strip() if document_type else "Article"
+                document_type=str(document_type).strip() if document_type else "Article",
+                location=str(location).strip() if location else ""
             )
             articles.append(article)
     
