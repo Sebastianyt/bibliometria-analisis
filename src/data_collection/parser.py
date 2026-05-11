@@ -20,6 +20,7 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
         keywords = []
         abstract = ''
         journal = ''
+        ebsco_source_value = ''  # Campo 'source' de EBSCO = nombre de revista
         year = None
         doi = ''
         url = ''
@@ -42,6 +43,10 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
                 abstract = row[col] if pd.notna(row[col]) else ''
             elif 'journal' in col_lower or 'publication title' in col_lower:
                 journal = row[col] if pd.notna(row[col]) else ''
+            elif col_lower == 'source':
+                # EBSCO usa 'source' como nombre de la revista/publicacion.
+                # Se guarda como candidato; se usara si no hay columna 'journal'.
+                ebsco_source_value = str(row[col]).strip() if pd.notna(row[col]) else ''
             elif 'year' in col_lower or 'publicationdate' in col_lower or 'date' in col_lower:
                 if year is None:  # En caso de múltiples columnas de fecha, priorizamos la primera que hallemos
                     try:
@@ -60,7 +65,11 @@ def parse_csv(file_path: str, source: str) -> List[Article]:
                 document_type = row[col] if pd.notna(row[col]) else ''
             elif 'publisherlocations' in col_lower or 'location' in col_lower:
                 location = row[col] if pd.notna(row[col]) else ''
-        
+
+        # Si no se encontro columna 'journal', usar el campo 'source' de EBSCO
+        if not journal and ebsco_source_value:
+            journal = ebsco_source_value
+
         if title:  # Only add if title exists
             article = Article(
                 title=str(title).strip(),
