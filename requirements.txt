@@ -17,5 +17,6 @@ scipy
 nltk
 wordcloud
 matplotlib
+numpy
 kaleido
 fpdf2
