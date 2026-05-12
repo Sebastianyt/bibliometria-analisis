@@ -36,8 +36,8 @@ def _get_valid_df(df: pd.DataFrame) -> pd.DataFrame:
     if "abstract" not in df.columns or "title" not in df.columns:
         return pd.DataFrame()
     df = df.dropna(subset=["abstract", "title"])
-    df = df[df["abstract"].astype(str).str.strip().str.len() > 50]
-    df = df[df["title"].astype(str).str.strip() != ""]
+    df = df[df["abstract"].astype(str).str.strip().str.len() > 50]  # type: ignore
+    df = df[df["title"].astype(str).str.strip() != ""]  # type: ignore
     return df.reset_index(drop=True)
 
 
