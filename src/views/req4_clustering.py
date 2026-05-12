@@ -101,8 +101,8 @@ def render():
     else:
         df_sel = df.head(n_articles).reset_index(drop=True)
 
-    abstracts = df_sel["abstract"].astype(str).tolist()
-    titles = df_sel["title"].astype(str).tolist()
+    abstracts = [str(x) for x in df_sel["abstract"].tolist()]
+    titles = [str(x) for x in df_sel["title"].tolist()]
 
     st.markdown(f"*Se analizarán **{n_articles}** artículos.*")
     st.divider()
@@ -234,6 +234,10 @@ def _render_method_tab(hc: HierarchicalClustering, method: str, scores: dict):
 
     # Dendrograma
     st.markdown("#### Dendrograma")
+    if hc.distance_matrix is None:
+        st.error("Matriz de distancias no disponible.")
+        return
+
     try:
         fig = build_plotly_dendrogram(
             distance_matrix=hc.distance_matrix,
