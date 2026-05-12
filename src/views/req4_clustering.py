@@ -14,9 +14,9 @@ import streamlit as st
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from clustering.hierarchical import HierarchicalClustering
-from clustering.dendrogram import build_plotly_dendrogram, build_comparison_summary
-from clustering.linkage_methods import get_method_info, get_all_methods
+from analysis.clustering.hierarchical import HierarchicalClustering
+from analysis.clustering.dendrogram import build_plotly_dendrogram, build_comparison_summary
+from analysis.clustering.linkage_methods import get_method_info, get_all_methods
 
 
 # ─── Carga de datos (cacheada) ──────────────────────────────────────────────

@@ -2,12 +2,12 @@ import streamlit as st
 import pandas as pd
 import os
 
-from similarity.levenshtein import levenshtein_similarity
-from similarity.jaccard import jaccard_similarity
-from similarity.cosine import tfidf_cosine_similarity
-from similarity.euclidean import tfidf_euclidean_similarity
-from similarity.bert_model import bert_similarity
-from similarity.word2vec_model import word2vec_similarity
+from analysis.similarity.levenshtein import levenshtein_similarity
+from analysis.similarity.jaccard import jaccard_similarity
+from analysis.similarity.cosine import tfidf_cosine_similarity
+from analysis.similarity.euclidean import tfidf_euclidean_similarity
+from analysis.similarity.bert_model import bert_similarity
+from analysis.similarity.word2vec_model import word2vec_similarity
 
 @st.cache_data
 def load_data():

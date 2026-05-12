@@ -47,26 +47,26 @@ tab2, tab3, tab4, tab5 = st.tabs([
 # REQUERIMIENTO 2 — Similitud Textual
 # ════════════════════════════════════════════════════════════════════════════
 with tab2:
-    from modules.req2_similarity import render as render_req2
+    from views.req2_similarity import render as render_req2
     render_req2()
 
 # ════════════════════════════════════════════════════════════════════════════
 # REQUERIMIENTO 3 — Frecuencia y Generación de Palabras
 # ════════════════════════════════════════════════════════════════════════════
 with tab3:
-    from modules.req3_frequency import render as render_req3
+    from views.req3_frequency import render as render_req3
     render_req3()
 
 # ════════════════════════════════════════════════════════════════════════════
 # REQUERIMIENTO 4 — Agrupamiento Jerárquico y Dendrogramas
 # ════════════════════════════════════════════════════════════════════════════
 with tab4:
-    from modules.req4_clustering import render as render_req4
+    from views.req4_clustering import render as render_req4
     render_req4()
 
 # ════════════════════════════════════════════════════════════════════════════
 # REQUERIMIENTO 5 — Análisis Visual y Reporte PDF
 # ════════════════════════════════════════════════════════════════════════════
 with tab5:
-    from modules.req5_visual import render as render_req5
+    from views.req5_visual import render as render_req5
     render_req5()

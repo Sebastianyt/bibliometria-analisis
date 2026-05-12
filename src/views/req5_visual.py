@@ -105,7 +105,7 @@ def render_heatmap(df):
         st.warning("El dataset no contiene la columna 'authors' para generar el mapa.")
         return None
 
-    from modules.surname_geolocator import get_country_from_authors
+    from preprocessing.geolocator import get_country_from_authors
 
     df_map = df.dropna(subset=["authors"]).copy()
     df_map["inferred_country"] = df_map["authors"].apply(get_country_from_authors)

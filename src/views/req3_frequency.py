@@ -13,9 +13,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from frequency_analysis.keyword_counter import count_keyword_frequencies
-from frequency_analysis.word_extractor import extract_new_keywords
-from frequency_analysis.precision_evaluator import evaluate_precision, average_precision
+from analysis.frequency_analysis.keyword_counter import count_keyword_frequencies
+from analysis.frequency_analysis.word_extractor import extract_new_keywords
+from analysis.frequency_analysis.precision_evaluator import evaluate_precision, average_precision
 
 # ─────────────────────────────────────────────
 # Constantes del requerimiento
