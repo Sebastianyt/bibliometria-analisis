@@ -12,19 +12,22 @@ from fpdf import FPDF
 def save_plotly_fig(fig, filename: str) -> str | None:
     """Exporta una figura Plotly a PNG. Devuelve la ruta o None si falla."""
     tmp_path = os.path.join(tempfile.gettempdir(), filename)
+    error1 = ""
     # Intento 1: to_image (kaleido 1.x)
     try:
         img_bytes = pio.to_image(fig, format="png", scale=2, width=1100, height=500)
         with open(tmp_path, "wb") as f:
             f.write(img_bytes)
         return tmp_path
-    except Exception:
-        pass
+    except Exception as e:
+        error1 = str(e)
+        
     # Intento 2: write_image clásico (kaleido 0.x)
     try:
         fig.write_image(tmp_path, scale=2)
         return tmp_path
-    except Exception:
+    except Exception as e:
+        st.warning(f"⚠️ No se pudo exportar el gráfico {filename}. Detalles técnicos (pasale esto a la IA): Error 1: {error1} | Error 2: {str(e)}")
         return None
 
 class ReportPDF(FPDF):
