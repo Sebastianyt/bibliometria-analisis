@@ -2,3 +2,4 @@ libnss3
 libfontconfig1
 libxrender1
 libxext6
+chromium
